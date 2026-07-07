@@ -4,10 +4,10 @@ from typing import List, Optional
 
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from app.hf_embeddings import HFRouterEmbeddings
 from langchain_chroma import Chroma
 
-from app.config import CHROMA_DIR, DATA_DIR, EMBEDDING_MODEL
+from app.config import CHROMA_DIR, DATA_DIR, EMBEDDING_MODEL, HUGGINGFACEHUB_API_TOKEN
 
 META_PATH = os.path.join(DATA_DIR, "documents.json")
 
@@ -18,7 +18,12 @@ _loaders = {
     ".txt": TextLoader,
 }
 
-embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+# Calls HuggingFace's hosted Inference Providers router instead of loading the
+# model in-process, avoiding the torch/sentence-transformers memory footprint.
+embeddings = HFRouterEmbeddings(
+    model=EMBEDDING_MODEL,
+    api_token=HUGGINGFACEHUB_API_TOKEN,
+)
 
 vectorstore = Chroma(
     collection_name="documents",
