@@ -20,6 +20,11 @@ class ChatRequest(BaseModel):
     document_ids: Optional[List[str]] = None
 
 
+class SourceChunk(BaseModel):
+    source: str
+    content: str
+
+
 class ChatResponse(BaseModel):
     answer: str
-    sources: List[str] = []
+    sources: List[SourceChunk] = []
