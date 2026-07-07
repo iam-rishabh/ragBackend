@@ -62,8 +62,8 @@ def _build_messages(question: str, history: List[ChatMessage], context: str):
     return messages
 
 
-def _retrieve(question: str, document_ids: Optional[List[str]]):
-    retriever = get_retriever(document_ids=document_ids)
+def _retrieve(question: str, document_ids: Optional[List[str]], session_id: str):
+    retriever = get_retriever(session_id=session_id, document_ids=document_ids)
     docs = retriever.invoke(question)
     sources = [
         {"source": d.metadata.get("source", "unknown"), "content": d.page_content}
@@ -72,8 +72,8 @@ def _retrieve(question: str, document_ids: Optional[List[str]]):
     return docs, sources
 
 
-def answer(question: str, history: List[ChatMessage], document_ids: Optional[List[str]]) -> dict:
-    docs, sources = _retrieve(question, document_ids)
+def answer(question: str, history: List[ChatMessage], document_ids: Optional[List[str]], session_id: str) -> dict:
+    docs, sources = _retrieve(question, document_ids, session_id)
     context = _format_context(docs)
     messages = _build_messages(question, history, context)
     result = llm.invoke(messages)
@@ -81,9 +81,9 @@ def answer(question: str, history: List[ChatMessage], document_ids: Optional[Lis
 
 
 async def stream_answer(
-    question: str, history: List[ChatMessage], document_ids: Optional[List[str]]
+    question: str, history: List[ChatMessage], document_ids: Optional[List[str]], session_id: str
 ) -> AsyncGenerator[str, None]:
-    docs, sources = _retrieve(question, document_ids)
+    docs, sources = _retrieve(question, document_ids, session_id)
     context = _format_context(docs)
     messages = _build_messages(question, history, context)
 

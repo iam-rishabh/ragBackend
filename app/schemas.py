@@ -7,6 +7,7 @@ class DocumentOut(BaseModel):
     name: str
     size: int
     chunks: int
+    expires_in: int = 0
 
 
 class ChatMessage(BaseModel):

@@ -2,9 +2,10 @@ import os
 import uuid
 from typing import List
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.config import DATA_DIR, MAX_DOCUMENTS
+from app.deps import get_session_id
 from app.document_store import delete_document, document_count, ingest_file, list_documents
 from app.schemas import DocumentOut
 
@@ -14,13 +15,16 @@ ALLOWED_EXT = {".pdf", ".doc", ".docx", ".txt"}
 
 
 @router.get("", response_model=List[DocumentOut])
-def get_documents():
-    return list_documents()
+def get_documents(session_id: str = Depends(get_session_id)):
+    return list_documents(session_id)
 
 
 @router.post("/upload", response_model=List[DocumentOut])
-async def upload_documents(files: List[UploadFile] = File(...)):
-    existing = document_count()
+async def upload_documents(
+    files: List[UploadFile] = File(...),
+    session_id: str = Depends(get_session_id),
+):
+    existing = document_count(session_id)
     if existing + len(files) > MAX_DOCUMENTS:
         raise HTTPException(
             status_code=400,
@@ -41,7 +45,7 @@ async def upload_documents(files: List[UploadFile] = File(...)):
             f.write(content)
 
         try:
-            entry = ingest_file(temp_path, upload.filename, document_id, len(content))
+            entry = ingest_file(temp_path, upload.filename, document_id, len(content), session_id)
         finally:
             os.remove(temp_path)
 
@@ -51,8 +55,8 @@ async def upload_documents(files: List[UploadFile] = File(...)):
 
 
 @router.delete("/{document_id}")
-def remove_document(document_id: str):
-    deleted = delete_document(document_id)
+def remove_document(document_id: str, session_id: str = Depends(get_session_id)):
+    deleted = delete_document(document_id, session_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Document not found")
     return {"id": document_id, "deleted": True}

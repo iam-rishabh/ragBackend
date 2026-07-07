@@ -1,10 +1,31 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import ALLOWED_ORIGINS
+from app.config import ALLOWED_ORIGINS, PURGE_INTERVAL_SECONDS
+from app.document_store import purge_expired_documents
 from app.routes import chat, documents
 
-app = FastAPI(title="Archive RAG API")
+
+async def _purge_loop():
+    while True:
+        try:
+            purge_expired_documents()
+        except Exception as exc:
+            print(f"[purge_loop] error: {exc}")
+        await asyncio.sleep(PURGE_INTERVAL_SECONDS)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(_purge_loop())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="Archive RAG API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

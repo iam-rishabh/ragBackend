@@ -14,5 +14,9 @@ DATA_DIR = os.getenv("DATA_DIR", "./data")
 MAX_DOCUMENTS = int(os.getenv("MAX_DOCUMENTS", "5"))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
 
+DOCUMENT_TTL_MINUTES = int(os.getenv("DOCUMENT_TTL_MINUTES", "20"))
+DOCUMENT_TTL_SECONDS = DOCUMENT_TTL_MINUTES * 60
+PURGE_INTERVAL_SECONDS = int(os.getenv("PURGE_INTERVAL_SECONDS", "60"))
+
 os.makedirs(CHROMA_DIR, exist_ok=True)
 os.makedirs(DATA_DIR, exist_ok=True)
